@@ -3,7 +3,19 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 const bodyParser = require('body-parser');
+const mongoose = require('mongoose');
 const dns = require('dns');
+const mongoUri = process.env['MONGO_URI']
+
+mongoose.connect(mongoUri);
+
+console.log(mongoose);
+const { Schema } = mongoose;
+
+const shortUrlSchema = new Schema({
+  url:  String, // String is shorthand for {type: String}
+});
+const ShortUrl = mongoose.model('ShortUrl', shortUrlSchema);
 
 // Basic Configuration
 const port = process.env.PORT || 3000;
@@ -14,13 +26,11 @@ app.use('/public', express.static(`${process.cwd()}/public`));
 app.use(bodyParser.urlencoded({extended: false})); // parse post body
 
 app.get('/', function(req, res) {
-  console.log('homepage!');
   res.sendFile(process.cwd() + '/views/index.html');
 });
 
 // Your first API endpoint
 app.get('/api/hello', function(req, res) {
-  console.log('hello!');
   res.json({ greeting: 'hello API' });
 });
 
@@ -30,19 +40,27 @@ app.post('/api/shorturl', (req, res) => {
     console.log(`body url: ${req.body.url}`);
     if(!/^https?:\/\/.*?\..*?/.test(req.body.url))
       res.json({error : 'invalid url'});      
-    shortUrls[req.params.shorturl] = req.body.url;
     dns.lookup(req.body.url.replace(/^(https?:\/\/)/,""), {all : true}, (err, addresses) => {
       if(err)
         res.json({error : 'invalid url'});
-      else
-        res.json({ original_url: req.body.url, short_url: 1});
+      else{
+        console.log('url is valid');
+        const shortUrl = new ShortUrl({url: req.body.url});
+        console.log('created short url');
+        shortUrl.save().then(urlSaved => res.json({ original_url: req.body.url, short_url: urlSaved._id}));
+      }
     });
 });
 app.get('/api/shorturl/:shorturl', (req, res) => {
-    if(req.params.shorturl in shortUrls)
-      res.redirect(shortUrls[req.params.shorturl]);
-    else
+  console.log(req.params.shorturl);
+  if(!req.params.shorturl)
       res.json({error : 'invalid url'});
+    
+  ShortUrl.findById(req.params.shorturl).exec((err, url) => {
+    if(err)
+      res.json({error : 'invalid url'});
+    res.redirect(url.url);
+  });
 });
 
 app.listen(port, function() {
