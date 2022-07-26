@@ -39,11 +39,11 @@ shortUrls = {};
 app.post('/api/shorturl', (req, res) => {
 
     console.log(`body url: ${req.body.url}`);
-    if(!req.body || !req.body.url || !/^https?:\/\/.*?\..*?/.test(req.body.url))
-      res.json({error : 'invalid url'});      
+    if(!/(http|https):\/\/([a-zA-Z\-]+.)?[a-zA-Z\-]+\.[a-zA-Z\-]+/.test(req.body.url))
+      return res.json({error : 'invalid url'});      
     dns.lookup(req.body.url.replace(/^(https?:\/\/)/,""), {all : true}, (err, addresses) => {
       if(err)
-        res.json({error : 'invalid url'});
+        return res.json({error : 'invalid url'});
       else{
         console.log('url is valid');
         const shortUrl = new ShortUrl({url: req.body.url});
