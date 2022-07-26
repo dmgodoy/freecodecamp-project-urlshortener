@@ -37,8 +37,9 @@ app.get('/api/hello', function(req, res) {
 shortUrls = {};
 
 app.post('/api/shorturl', (req, res) => {
+
     console.log(`body url: ${req.body.url}`);
-    if(!/^https?:\/\/.*?\..*?/.test(req.body.url))
+    if(!req.body || !req.body.url || !/^https?:\/\/.*?\..*?/.test(req.body.url))
       res.json({error : 'invalid url'});      
     dns.lookup(req.body.url.replace(/^(https?:\/\/)/,""), {all : true}, (err, addresses) => {
       if(err)
@@ -52,14 +53,17 @@ app.post('/api/shorturl', (req, res) => {
     });
 });
 app.get('/api/shorturl/:shorturl', (req, res) => {
-  console.log(req.params.shorturl);
+  console.log(`shorturl : ${req.params.shorturl}`);
   if(!req.params.shorturl)
       res.json({error : 'invalid url'});
     
   ShortUrl.findById(req.params.shorturl).exec((err, url) => {
-    if(err)
-      res.json({error : 'invalid url'});
-    res.redirect(url.url);
+    console.log(`find by id (${req.params.shorturl})`);
+    console.log(`err : ${err}`);
+    console.log(`url : ${url}`);
+    if(!err && url)
+      res.redirect(url.url);
+    res.json({error : 'invalid url'});
   });
 });
 
