@@ -27,6 +27,7 @@ app.get('/api/hello', function(req, res) {
 shortUrls = {};
 
 app.post('/api/shorturl', (req, res) => {
+    console.log(`body url: ${req.body.url}`);
     if(!/^https?:\/\/.*?\..*?/.test(req.body.url))
       res.json({error : 'invalid url'});      
     shortUrls[req.params.shorturl] = req.body.url;
@@ -38,7 +39,10 @@ app.post('/api/shorturl', (req, res) => {
     });
 });
 app.get('/api/shorturl/:shorturl', (req, res) => {
-    res.redirect(shortUrls[req.params.shorturl]);
+    if(req.params.shorturl in shortUrls)
+      res.redirect(shortUrls[req.params.shorturl]);
+    else
+      res.json({error : 'invalid url'});
 });
 
 app.listen(port, function() {
