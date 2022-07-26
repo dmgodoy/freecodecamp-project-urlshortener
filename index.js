@@ -37,18 +37,18 @@ app.get('/api/hello', function(req, res) {
 shortUrls = {};
 
 app.post('/api/shorturl', (req, res) => {
-
-    console.log(`body url: ${req.body.url}`);
-    if(!/(http|https):\/\/([a-zA-Z\-]+.)?[a-zA-Z\-]+\.[a-zA-Z\-]+/.test(req.body.url))
+    
+    console.log(`body url: ${req.body.original_url}`);
+    if(!/(http|https):\/\/([a-zA-Z\-]+.)?[a-zA-Z\-]+\.[a-zA-Z\-]+/.test(req.body.original_url))
       return res.json({error : 'invalid url'});      
-    dns.lookup(req.body.url.replace(/^(https?:\/\/)/,""), {all : true}, (err, addresses) => {
+    dns.lookup(req.body.original_url.replace(/^(https?:\/\/)/,""), {all : true}, (err, addresses) => {
       if(err)
         return res.json({error : 'invalid url'});
       else{
         console.log('url is valid');
-        const shortUrl = new ShortUrl({url: req.body.url});
+        const shortUrl = new ShortUrl({url: req.body.original_url});
         console.log('created short url');
-        shortUrl.save().then(urlSaved => res.json({ original_url: req.body.url, short_url: urlSaved._id}));
+        shortUrl.save().then(urlSaved => res.json({ original_url: req.body.original_url, short_url: urlSaved._id}));
       }
     });
 });
