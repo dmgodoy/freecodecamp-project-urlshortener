@@ -55,15 +55,15 @@ app.post('/api/shorturl', (req, res) => {
 app.get('/api/shorturl/:shorturl', (req, res) => {
   console.log(`shorturl : ${req.params.shorturl}`);
   if(!req.params.shorturl)
-      res.json({error : 'invalid url'});
+      return res.json({error : 'invalid url'});
     
   ShortUrl.findById(req.params.shorturl).exec((err, url) => {
     console.log(`find by id (${req.params.shorturl})`);
     console.log(`err : ${err}`);
     console.log(`url : ${url}`);
     if(!err && url)
-      res.redirect(url.url);
-    res.json({error : 'invalid url'});
+      return res.redirect(url.url);
+    return res.json({error : 'invalid url'});
   });
 });
 
