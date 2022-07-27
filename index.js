@@ -1,3 +1,4 @@
+const UrlValidator = require('./urlvalidator.js');
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -7,9 +8,9 @@ const mongoose = require('mongoose');
 const dns = require('dns');
 const mongoUri = process.env['MONGO_URI']
 
+// Data Base Configuration
 mongoose.connect(mongoUri);
 
-console.log(mongoose);
 const { Schema } = mongoose;
 
 const shortUrlSchema = new Schema({
@@ -34,33 +35,25 @@ app.get('/api/hello', function(req, res) {
   res.json({ greeting: 'hello API' });
 });
 
-shortUrls = {};
-
 app.post('/api/shorturl', (req, res) => {
     
-    console.log(`body url: ${req.body.url}`);
-    if(!/(http|https):\/\/([a-zA-Z\-]+.)?[a-zA-Z\-]+\.[a-zA-Z\-]+/.test(req.body.url))
-      return res.json({error : 'invalid url'});      
-    dns.lookup(req.body.url.replace(/^(https?:\/\/)/,""), {all : true}, (err, addresses) => {
+    if(!new UrlValidator().test(req.body.url))
+      return res.json({error : 'invalid url'});
+    let domain = new UrlValidator().getDomain(req.body.url);     
+    dns.lookup(domain, {all : true}, (err, addresses) => {
       if(err)
         return res.json({error : 'invalid url'});
       else{
-        console.log('url is valid');
         const shortUrl = new ShortUrl({url: req.body.url});
-        console.log('created short url');
         shortUrl.save().then(urlSaved => res.json({ original_url: req.body.url, short_url: urlSaved._id}));
       }
     });
 });
 app.get('/api/shorturl/:shorturl', (req, res) => {
-  console.log(`shorturl : ${req.params.shorturl}`);
   if(!req.params.shorturl)
       return res.json({error : 'invalid url'});
     
   ShortUrl.findById(req.params.shorturl).exec((err, url) => {
-    console.log(`find by id (${req.params.shorturl})`);
-    console.log(`err : ${err}`);
-    console.log(`url : ${url}`);
     if(!err && url)
       return res.redirect(url.url);
     return res.json({error : 'invalid url'});
